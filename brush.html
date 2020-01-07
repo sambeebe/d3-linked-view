@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+
+    <meta charset="UTF-8">
+<!-- https://www.d3-graph-gallery.com/graph/interactivity_brush.html reference -->
+<script src="https://d3js.org/d3.v4.js"></script>
+<script type="text/javascript" src="https://cycling74.s3.amazonaws.com/download/xebra.js"></script>
+
+<body onload="displaytext()">
+
+
+
+SATV: <span id="SATV"></span>
+SATM: <span id="SATM"></span>
+GPA: <span id="GPA"></span>
+ACT: <span id="ACT"></span>
+
+<br>
+<br>
+<br>
+
+</body>
+
+<div id="mysvg"></div>
+
+
+
+<div id="container">
+</div>
+
+
+<style>
+
+.grey {
+  fill: grey;
+    opacity: 1.;
+  r: 3;
+}
+.selected {
+  fill: red;
+  opacity: 1.;
+  r: 3;
+}
+.unselected {
+  fill: black;
+  opacity: 1.;
+  r: 3;
+}
+
+.selected2 {
+  fill: black;
+  opacity: 1.;
+  r: 7;
+}
+
+
+
+</style>
+
+<script src="scores.js" charset="utf-8"></script>
+
+<script>
+
+var newParagraph = document.createElement("p");
+var maxObjectRect;
+
+
+//interactive controller
+var options = {
+  hostname : "127.0.0.1", // localhost
+  port : 8086,
+  supported_objects : [Xebra.SUPPORTED_OBJECTS]
+};
+
+var xebraState = new Xebra.State(options);
+
+xebraState.connect();
+
+
+
+var GPA = [];
+var SATV = [];
+var SATM = [];
+
+for (var i=0; i<scores.length; i++) {
+  GPA[i]=scores[i].GPA;
+  SATV[i]=scores[i].SATV;
+  SATM[i]=scores[i].SATM;
+}
+
+var padding = 70;
+
+    width = 460*2 - 60 - 30;
+    height = 400*2 - 10 - 30;
+
+
+var svg = d3.select("#mysvg")
+  .append("svg")
+    .attr("width", width*20 + 60 + 30)
+    .attr("height", height + 10 + 30)
+  .append("g")
+    .attr("transform",
+          "translate(" + 60 + "," + 10 + ")");
+
+var x = d3.scaleLinear()
+  .domain([0, 800])
+  .range([ 0, width/2 ]);
+  svg.append("g")
+  .attr("transform", "translate(0," + height/2 + ")")
+  .call(d3.axisBottom(x));
+   svg.append("text")
+  .attr("transform", "translate("+ width/4 +"," + height/1.8 + ")")
+       .text("SATM");
+
+var y = d3.scaleLinear()
+  .domain([0, 800])
+  .range([ height/2 , 0]);
+  svg.append("g")
+  .call(d3.axisLeft(y));
+  svg.append("text")
+        .attr("y", - 40)
+        .attr("transform", "rotate(-90)")
+        .attr("x",150 - ((height)/2))
+        .text("SATV");
+
+var x0 = d3.scaleLinear()
+  .domain([0, 35])
+  .range([ 0, width/2 ]);
+  svg.append("g")
+  .attr("transform", "translate("+ (width/2+padding) + "," + height/2 + ")")
+  .call(d3.axisBottom(x0));
+  svg.append("text")
+  .attr("transform", "translate("+ width / 1.2+"," + height/1.8 + ")")
+
+       .text("ACT ");
+
+
+var y0 = d3.scaleLinear()
+  .domain([0., 4.])
+  .range([ height/2 , 0]);
+  svg.append("g")
+  .attr("transform", "translate(" + (width/2+padding)  + ","+ 0 + ")")
+  .call(d3.axisLeft(y0));
+        svg.append("text")
+        .attr("y", + width/2+padding-30)
+        .attr("transform", "rotate(-90)")
+        .attr("x",170 - ((height)/2))
+
+        .text("GPA");
+
+
+function updateChart() {
+
+  myCircle.classed("unselected",false);
+  myCircle2.classed("unselected",false);
+  var extent = d3.event.selection;
+
+  if (!extent) {
+    return;
+  }
+  else{
+    myCircle.classed("selected", function(d){
+      return isBrushed(extent, x(d.SATV), y(d.SATM))
+    } )
+
+    myCircle.classed("grey", function(d){
+      return !isBrushed(extent, x(d.SATV), y(d.SATM))
+    } )
+
+    myCircle.classed("selected2", function(d){
+      return isBrushed(extent,  width/2+x0(d.ACT)+padding, y0(d.GPA))
+    } )
+
+    myCircle2.classed("selected2", function(d){
+      return isBrushed(extent, x(d.SATV), y(d.SATM))
+    } )
+
+    myCircle2.classed("grey", function(d){
+      return !isBrushed(extent, width/2+x0(d.ACT)+padding, y0(d.GPA))
+    } )
+
+    myCircle2.classed("selected", function(d){
+      return isBrushed(extent,  width/2+x0(d.ACT)+padding, y0(d.GPA))
+    } )
+  }
+}
+
+function updateChart2(extent) {
+  myCircle.classed("unselected",false);
+  myCircle2.classed("unselected",false);
+  // var extent = d3.event.selection;
+
+  if (!extent) {
+    return;
+  }
+  else{
+    myCircle.classed("selected", function(d){
+      return isBrushed(extent, x(d.SATV), y(d.SATM))
+    } )
+
+    myCircle.classed("grey", function(d){
+      return !isBrushed(extent, x(d.SATV), y(d.SATM))
+    } )
+
+    myCircle.classed("selected2", function(d){
+      return isBrushed(extent,  width/2+x0(d.ACT)+padding, y0(d.GPA))
+    } )
+
+    myCircle2.classed("selected2", function(d){
+      return isBrushed(extent, x(d.SATV), y(d.SATM))
+    } )
+
+    myCircle2.classed("grey", function(d){
+      return !isBrushed(extent, width/2+x0(d.ACT)+padding, y0(d.GPA))
+    } )
+
+    myCircle2.classed("selected", function(d){
+      return isBrushed(extent,  width/2+x0(d.ACT)+padding, y0(d.GPA))
+    } )
+  }
+}
+
+function clickselect(i2){
+    myCircle.classed("unselected",false);
+    myCircle2.classed("unselected",false);
+
+    myCircle.classed("selected", function(d,i){
+      if (myCircle.classed("selected") == true)
+      {
+        {return false;}
+        }
+      else{
+        if(i2==i){
+          return true;
+        }
+      }
+    })
+
+    myCircle2.classed("selected2", function(d,i){
+      if(i2==i){return true;}
+    })
+}
+
+function clickselect2(i2){
+    myCircle.classed("unselected",false);
+    myCircle2.classed("unselected",false);
+    console.log("hey")
+    myCircle2.classed("selected", function(d,i){
+      if (myCircle2.classed("selected") == true)
+      {
+        {return false;}
+        }
+      else{
+        if(i2==i){
+          return true;
+        }
+      }
+    })
+
+    myCircle.classed("selected2", function(d,i){
+      if(i2==i){return true;}
+    })
+}
+//
+var brush = d3.brush()
+  .on("start brush", updateChart)
+  .on('end', clearChart)
+  .extent( [ [0,0], [(width+padding),height] ] );
+
+const g = svg.append("g");
+
+g.call(d3.brush()
+  .on("start brush", updateChart)
+  .on('end', clearChart)
+  .extent( [ [0,0], [(width+padding),height] ] ));
+
+
+
+
+function clearChart(){
+  if(!d3.event.selection){
+    myCircle.classed("unselected",true);
+    myCircle2.classed("unselected",true);
+  }
+}
+
+//interactive controller
+xebraState.on("channel_message_received", function(name, data) {
+    var x1 = parseInt(data[0]);
+    var x2 = parseInt(data[1]);
+    var pinch = parseInt(data[2]);
+    var array = [x1,x1+50,x2,x2+50];
+      updateChart2(array);
+      g.call(brush
+      .move, [
+        [x1, x2],
+        [x1+pinch, x2+pinch]
+      ]
+    )
+});
+
+
+var myCircle = svg.append('g')
+  .selectAll("circle")
+  .data(scores)
+  .enter()
+  .append("circle")
+    .attr("cx", function (d,i) { return x(d.SATV ); } )
+    .attr("cy", function (d,i) { return y(d.SATM ); } )
+    .attr("r",function (d,i) { return 3; } )
+    .on("click", function(d,i) {
+      clickselect(i)
+      displaytext((d.SATV),(d.SATM),(d.ACT ),(d.GPA ))
+    })
+
+var myCircle2 = svg.append('g')
+  .selectAll("circle")
+  .data(scores)
+  .enter()
+  .append("circle")
+    .attr("cx", function (d,i) { return x0(d.ACT )+(width/2+padding) ; } )
+    .attr("cy", function (d,i) { return y0(d.GPA ); } )
+    .attr("r",function (d,i) { return 3; } )
+    .attr("fill", "black")
+    .on("click", function(d,i) {
+      clickselect2(i)
+      displaytext((d.SATV),(d.SATM),(d.ACT ),(d.GPA ))
+    })
+
+function displaytext(satv,satm,act,gpa){
+  document.getElementById("SATV").innerHTML = satv;
+  document.getElementById("SATM").innerHTML = satm;
+  document.getElementById("ACT").innerHTML = act;
+  document.getElementById("GPA").innerHTML = gpa;
+}
+
+
+function isBrushed(brushArea, cx, cy) {
+  return brushArea[0][0] <= cx && cx <= brushArea[1][0] && brushArea[0][1] <= cy && cy <= brushArea[1][1];
+}
+
+</script>
